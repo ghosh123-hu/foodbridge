@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodShare — Connect & Share Food</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #faf9f6; --surface: #ffffff; --surface2: #f4f2ee;
+      --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1a18; --text-muted: #6b6b67; --text-faint: #a0a09b;
+      --green-bg: #eaf3de; --green-text: #3b6d11; --green-border: #c0dd97;
+      --amber-bg: #faeeda; --amber-text: #854f0b; --amber-border: #fac775;
+      --red-bg: #fcebeb; --red-text: #a32d2d;
+      --radius: 10px; --radius-lg: 14px; --radius-pill: 999px;
+    }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    nav { position: sticky; top: 0; z-index: 50; background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; }
+    .nav-brand { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; white-space: nowrap; }
+    .nav-brand span { color: var(--green-text); }
+    .nav-tabs { display: flex; gap: 2px; }
+    .nav-tab { padding: 6px 14px; border: none; background: none; font-size: 14px; color: var(--text-muted); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .nav-tab:hover { background: var(--surface2); color: var(--text); }
+    .nav-tab.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-user { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+    .nav-btn { padding: 7px 16px; background: var(--text); color: var(--surface); border: none; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; font-family: inherit; white-space: nowrap; }
+    .nav-btn:hover { opacity: 0.8; }
+    .nav-btn.outline { background: none; color: var(--text); border: 0.5px solid var(--border-strong); }
+    .nav-btn.outline:hover { background: var(--surface2); opacity: 1; }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+    /* AUTH */
+    .auth-wrap { max-width: 420px; margin: 4rem auto; }
+    .auth-wrap h1 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+    .auth-wrap .sub { font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 2rem; }
+    .auth-toggle { display: flex; background: var(--surface2); border-radius: var(--radius-pill); padding: 3px; margin-bottom: 1.5rem; }
+    .auth-toggle button { flex: 1; padding: 8px; border: none; background: none; font-family: inherit; font-size: 14px; color: var(--text-muted); border-radius: var(--radius-pill); cursor: pointer; transition: all 0.15s; }
+    .auth-toggle button.active { background: var(--surface); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.75rem; }
+    .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; }
+    .stat-num { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+    .stat-num.green { color: var(--green-text); } .stat-num.amber { color: var(--amber-text); }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* FILTERS */
+    .filter-row { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-pill); font-size: 13px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .filter-btn:hover { border-color: var(--border-strong); color: var(--text); }
+    .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+    /* CARDS */
+    .listings { display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; transition: border-color 0.15s, box-shadow 0.15s; }
+    .card:hover { border-color: var(--border-strong); box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+    .card.claimed { opacity: 0.55; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; }
+    .badge-donate { background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border); }
+    .badge-request { background: var(--amber-bg); color: var(--amber-text); border: 0.5px solid var(--amber-border); }
+    .badge-claimed { background: var(--surface2); color: var(--text-faint); border: 0.5px solid var(--border); }
+    .card-time { font-size: 12px; color: var(--text-faint); }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+    .card-desc { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+    .card-meta { display: flex; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); font-size: 12px; color: var(--text-faint); flex-wrap: wrap; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .poster { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+    .av0{background:#eaf3de;color:#3b6d11} .av1{background:#faeeda;color:#854f0b} .av2{background:#e1f5ee;color:#0f6e56} .av3{background:#e6f1fb;color:#185fa5} .av4{background:#fbeaf0;color:#993556}
+    .poster-name { font-size: 13px; color: var(--text-muted); }
+
+    .btn { padding: 7px 16px; border: 0.5px solid var(--border-strong); background: var(--surface); border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; color: var(--text); }
+    .btn:hover { background: var(--surface2); }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+    .btn-primary { background: var(--text); color: var(--surface); border-color: var(--text); }
+    .btn-primary:hover { opacity: 0.8; background: var(--text); }
+    .btn-full { width: 100%; padding: 11px; font-size: 15px; }
+    .btn-danger { border-color: #f09595; color: var(--red-text); }
+    .btn-danger:hover { background: var(--red-bg); }
+
+    /* FORMS */
+    .form-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; }
+    .form-wrap h2 { font-size: 18px; font-weight: 600; margin-bottom: 1.25rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; font-weight: 500; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 9px 12px; font-size: 14px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; transition: border-color 0.15s; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--text); }
+    .form-group textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+    .form-error { color: var(--red-text); font-size: 13px; margin-top: 8px; }
+    .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .type-opt { padding: 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.15s; user-select: none; }
+    .type-opt .emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+    .type-opt.sel-donate { border-color: var(--green-text); background: var(--green-bg); color: var(--green-text); }
+    .type-opt.sel-request { border-color: var(--amber-text); background: var(--amber-bg); color: var(--amber-text); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal { background: var(--surface); border-radius: var(--radius-lg); padding: 1.75rem; max-width: 420px; width: 100%; border: 0.5px solid var(--border); transform: translateY(12px); transition: transform 0.2s; }
+    .modal-overlay.show .modal { transform: translateY(0); }
+    .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: var(--text-muted); line-height: 1.55; margin-bottom: 10px; }
+    .modal-meta { font-size: 13px; color: var(--text-faint); margin-bottom: 1.25rem; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .loading { text-align: center; padding: 3rem; color: var(--text-faint); font-size: 14px; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--text-muted); font-size: 15px; line-height: 1.7; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--text); color: var(--surface); padding: 10px 20px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.2s; white-space: nowrap; z-index: 999; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.error { background: var(--red-text); }
+
+    @media (max-width: 540px) {
+      nav { padding: 0 1rem; }
+      .container { padding: 1.25rem 1rem 4rem; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stats .stat:last-child { grid-column: span 2; }
+      .form-row-2 { grid-template-columns: 1fr; }
+      .nav-tabs { display: none; }
+      .nav-user { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Food<span>Share</span></div>
+  <div class="nav-tabs" id="nav-tabs" style="display:none;">
+    <button class="nav-tab active" onclick="setTab('browse')">Browse</button>
+    <button class="nav-tab" onclick="setTab('mine')">My activity</button>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <button class="nav-btn outline" onclick="showAuth('login')">Sign in</button>
+    <button class="nav-btn" onclick="showAuth('register')">Join free</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- AUTH SCREEN -->
+  <div id="screen-auth">
+    <div class="auth-wrap">
+      <div style="text-align:center;font-size:38px;margin-bottom:10px;">🥗</div>
+      <h1>Welcome to FoodShare</h1>
+      <p class="sub">Reduce food waste. Feed your community.</p>
+      <div class="auth-toggle">
+        <button id="auth-tab-register" class="active" onclick="switchAuthMode('register')">Create account</button>
+        <button id="auth-tab-login" onclick="switchAuthMode('login')">Sign in</button>
+      </div>
+      <div class="form-wrap" style="padding:1.5rem;">
+        <div id="auth-register-fields">
+          <div class="form-group">
+            <label>Full name</label>
+            <input id="a-name" type="text" placeholder="Your name" />
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Neighbourhood</label>
+              <input id="a-area" type="text" placeholder="e.g. Bandra" />
+            </div>
+            <div class="form-group">
+              <label>Phone (optional)</label>
+              <input id="a-phone" type="text" placeholder="+91 …" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="a-email" type="email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="a-password" type="password" placeholder="Min 6 characters" />
+        </div>
+        <div class="form-error" id="auth-error" style="display:none;"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:1rem;" onclick="submitAuth()" id="auth-submit-btn">Create account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="screen-app" style="display:none;">
+
+    <div id="tab-browse">
+      <div class="stats">
+        <div class="stat"><div class="stat-num green" id="s-donate">—</div><div class="stat-label">Available donations</div></div>
+        <div class="stat"><div class="stat-num amber" id="s-request">—</div><div class="stat-label">Food requests</div></div>
+        <div class="stat"><div class="stat-num" id="s-claimed">—</div><div class="stat-label">Connections made</div></div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('donate',this)">Donations</button>
+        <button class="filter-btn" onclick="setFilter('request',this)">Requests</button>
+        <button class="filter-btn" onclick="setFilter('Produce',this)">Produce</button>
+        <button class="filter-btn" onclick="setFilter('Baked goods',this)">Baked goods</button>
+        <button class="filter-btn" onclick="setFilter('Cooked meal',this)">Cooked meals</button>
+        <button class="filter-btn" onclick="setFilter('Packaged',this)">Packaged</button>
+      </div>
+      <div class="listings" id="listings"><div class="loading"><span class="spinner"></span>Loading listings…</div></div>
+    </div>
+
+    <div id="tab-post" style="display:none;">
+      <div class="form-wrap">
+        <h2>Post a listing</h2>
+        <div class="form-group">
+          <label>What would you like to do?</label>
+          <div class="type-toggle">
+            <div class="type-opt sel-donate" id="opt-donate" onclick="selectType('donate')"><span class="emoji">🥦</span>Donate food</div>
+            <div class="type-opt" id="opt-request" onclick="selectType('request')"><span class="emoji">🙏</span>Request food</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input id="f-title" type="text" placeholder="e.g. Homemade dal, excess vegetables…" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="f-desc" placeholder="Quantity, dietary info, pickup instructions…"></textarea>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="f-cat">
+              <option value="Produce">Produce</option>
+              <option value="Baked goods">Baked goods</option>
+              <option value="Cooked meal">Cooked meal</option>
+              <option value="Packaged">Packaged / dry goods</option>
+              <option value="Dairy & eggs">Dairy &amp; eggs</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Area</label>
+            <input id="f-area" type="text" placeholder="e.g. Bandra, Andheri West" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Available until</label>
+          <input id="f-expiry" type="text" placeholder="e.g. Today evening, Flexible" />
+        </div>
+        <div class="form-error" id="post-error" style="display:none;"></div>
+        <div class="form-actions">
+          <button class="btn" onclick="resetPostForm()">Clear</button>
+          <button class="btn btn-primary" onclick="submitListing()" id="post-submit-btn">Post listing</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-mine" style="display:none;">
+      <p class="section-title">Your listings</p>
+      <div id="my-listings"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <p id="modal-desc"></p>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm-btn"></button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:4000/api';
+
+  let currentUser  = null;
+  let activeFilter = 'all';
+  let formType     = 'donate';
+  let authMode     = 'register';
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const COLORS = ['av0','av1','av2','av3','av4'];
+  function avatarColor(n){ let h=0; for(let c of n) h=(h+c.charCodeAt(0))%COLORS.length; return COLORS[h]; }
+  function initials(n){ return n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+  function timeAgo(ts){
+    const d=(Date.now()-new Date(ts))/1000;
+    if(d<120) return 'just now';
+    if(d<3600) return Math.floor(d/60)+'m ago';
+    if(d<86400) return Math.floor(d/3600)+'h ago';
+    return Math.floor(d/86400)+'d ago';
+  }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // credentials:'include' sends the fs_sid cookie automatically on every request
+  async function api(path, opts={}){
+    const res = await fetch(API + path, {
+      ...opts,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...opts.headers },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  function showToast(msg, isError=false){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (isError ? ' error' : '');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.className = '', 3200);
+  }
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  function showAuth(mode='register'){
+    switchAuthMode(mode);
+    document.getElementById('screen-auth').style.display = '';
+    document.getElementById('screen-app').style.display  = 'none';
+    document.getElementById('nav-tabs').style.display    = 'none';
+    document.getElementById('nav-right').innerHTML =
+      `<button class="nav-btn outline" onclick="showAuth('login')">Sign in</button>
+       <button class="nav-btn" onclick="showAuth('register')">Join free</button>`;
+  }
+
+  function showApp(){
+    document.getElementById('screen-auth').style.display = 'none';
+    document.getElementById('screen-app').style.display  = '';
+    document.getElementById('nav-tabs').style.display    = 'flex';
+    const first = (currentUser.name || '').split(' ')[0];
+    document.getElementById('nav-right').innerHTML =
+      `<span class="nav-user">Hi, ${esc(first)}</span>
+       <button class="nav-btn" onclick="setTab('post')">+ Post</button>
+       <button class="nav-btn outline" onclick="logout()">Sign out</button>`;
+    setTab('browse');
+  }
+
+  function switchAuthMode(mode){
+    authMode = mode;
+    document.getElementById('auth-tab-login').classList.toggle('active', mode === 'login');
+    document.getElementById('auth-tab-register').classList.toggle('active', mode === 'register');
+    document.getElementById('auth-register-fields').style.display = mode === 'register' ? '' : 'none';
+    document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'Sign in' : 'Create account';
+    document.getElementById('auth-error').style.display = 'none';
+  }
+
+  async function submitAuth(){
+    const btn   = document.getElementById('auth-submit-btn');
+    const errEl = document.getElementById('auth-error');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = authMode === 'login' ? 'Signing in…' : 'Creating account…';
+    try {
+      let data;
+      if (authMode === 'register') {
+        data = await api('/auth/register', { method: 'POST', body: JSON.stringify({
+          name:     document.getElementById('a-name').value.trim(),
+          email:    document.getElementById('a-email').value.trim(),
+          password: document.getElementById('a-password').value,
+          area:     document.getElementById('a-area').value.trim(),
+          phone:    document.getElementById('a-phone').value.trim(),
+        })});
+      } else {
+        data = await api('/auth/login', { method: 'POST', body: JSON.stringify({
+          email:    document.getElementById('a-email').value.trim(),
+          password: document.getElementById('a-password').value,
+        })});
+      }
+      // Server set the httpOnly cookie — just save user for display
+      currentUser = data.user;
+      showApp();
+    } catch(err){
+      errEl.textContent = err.message;
+      errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = authMode === 'login' ? 'Sign in' : 'Create account';
+    }
+  }
+
+  async function logout(){
+    try { await api('/auth/logout', { method: 'POST' }); } catch{}
+    currentUser = null;
+    showAuth('login');
+    showToast('Signed out.');
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+  function setTab(tab){
+    ['browse','post','mine'].forEach(t =>
+      document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none'
+    );
+    document.querySelectorAll('.nav-tab').forEach((el,i) =>
+      el.classList.toggle('active', ['browse','','mine'][i] === tab)
+    );
+    if (tab === 'browse') { loadStats(); loadListings(); }
+    if (tab === 'mine')   loadMine();
+  }
+
+  // ── Listings ───────────────────────────────────────────────────────────────
+  async function loadStats(){
+    try {
+      const d = await api('/listings/stats');
+      document.getElementById('s-donate').textContent  = d.donations;
+      document.getElementById('s-request').textContent = d.requests;
+      document.getElementById('s-claimed').textContent = d.claimed;
+    } catch{}
+  }
+
+  async function loadListings(){
+    const c = document.getElementById('listings');
+    c.innerHTML = '<div class="loading"><span class="spinner"></span>Loading listings…</div>';
+    try {
+      let qs = '';
+      if (activeFilter === 'donate')       qs = '?type=donate';
+      else if (activeFilter === 'request') qs = '?type=request';
+      else if (activeFilter !== 'all')     qs = '?category=' + encodeURIComponent(activeFilter);
+      const data = await api('/listings' + qs);
+      c.innerHTML = data.listings.length
+        ? data.listings.map(l => cardHTML(l, false)).join('')
+        : '<div class="empty">No listings match this filter.</div>';
+    } catch(err){
+      c.innerHTML = `<div class="empty">Could not load listings.<br>${esc(err.message)}</div>`;
+    }
+  }
+
+  async function loadMine(){
+    const c = document.getElementById('my-listings');
+    c.innerHTML = '<div class="loading"><span class="spinner"></span>Loading…</div>';
+    try {
+      const data = await api('/listings/mine');
+      c.innerHTML = data.listings.length
+        ? data.listings.map(l => cardHTML(l, true)).join('')
+        : `<div class="empty">You haven't posted anything yet.<br><br>
+            <button class="btn btn-primary" onclick="setTab('post')">Post a listing →</button></div>`;
+    } catch(err){
+      c.innerHTML = `<div class="empty">Could not load your listings.<br>${esc(err.message)}</div>`;
+    }
+  }
+
+  function cardHTML(l, isMine){
+    const badgeClass = l.status==='claimed' ? 'badge-claimed' : (l.type==='donate' ? 'badge-donate' : 'badge-request');
+    const badgeLabel = l.status==='claimed' ? 'Claimed'       : (l.type==='donate' ? 'Donation'     : 'Request');
+    const dot        = l.status==='claimed' ? '⚪'             : (l.type==='donate' ? '🟢'            : '🟡');
+    const name       = l.user_name || 'Anonymous';
+    let btn;
+    if (isMine) {
+      btn = `<button class="btn btn-danger" style="font-size:12px;padding:5px 14px;" onclick="deleteListing(${l.id})">Remove</button>`;
+    } else if (l.status === 'claimed') {
+      btn = `<button class="btn" disabled style="font-size:12px;padding:5px 14px;">Unavailable</button>`;
+    } else {
+      const lbl = l.type === 'donate' ? 'Claim food' : 'Offer to help';
+      btn = `<button class="btn btn-primary" style="font-size:12px;padding:5px 14px;"
+               onclick="openModal(${l.id},'${esc(l.title)}','${esc(l.description||'')}','${esc(l.area)}','${esc(l.expiry||'')}','${esc(name)}','${l.type}')">${lbl}</button>`;
+    }
+    return `<div class="card${l.status==='claimed'?' claimed':''}" id="card-${l.id}">
+      <div class="card-top"><span class="badge ${badgeClass}">${dot} ${badgeLabel}</span><span class="card-time">${timeAgo(l.created_at)}</span></div>
+      <div class="card-title">${esc(l.title)}</div>
+      <div class="card-desc">${esc(l.description || 'No description provided.')}</div>
+      <div class="card-meta"><span>📍 ${esc(l.area)}</span><span>🕐 ${esc(l.expiry||'Flexible')}</span><span>🏷 ${esc(l.category)}</span></div>
+      <div class="card-footer">
+        <div class="poster"><div class="avatar ${avatarColor(name)}">${initials(name)}</div><span class="poster-name">${esc(name)}</span></div>
+        ${btn}
+      </div>
+    </div>`;
+  }
+
+  function openModal(id, title, desc, area, expiry, name, type){
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').textContent  = desc || 'No description provided.';
+    document.getElementById('modal-meta').innerHTML    =
+      `<span>📍 ${esc(area)}</span> &nbsp; <span>🕐 ${esc(expiry||'Flexible')}</span> &nbsp; <span>👤 ${esc(name)}</span>`;
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.textContent = type === 'donate' ? 'Confirm claim' : 'Confirm offer';
+    btn.onclick = () => confirmClaim(id);
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+
+  async function confirmClaim(id){
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.disabled = true; btn.textContent = 'Confirming…';
+    try {
+      await api(`/listings/${id}/claim`, { method: 'PATCH' });
+      closeModal();
+      showToast('Done! Reach out to coordinate pickup.');
+      loadListings(); loadStats();
+    } catch(err){
+      showToast(err.message, true);
+      btn.disabled = false; btn.textContent = 'Confirm claim';
+    }
+  }
+
+  function closeModal(e){
+    if (e && e.target !== document.getElementById('modal-overlay')) return;
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+
+  async function deleteListing(id){
+    if (!confirm('Remove this listing?')) return;
+    try {
+      await api(`/listings/${id}`, { method: 'DELETE' });
+      showToast('Listing removed.');
+      loadMine(); loadStats();
+    } catch(err){ showToast(err.message, true); }
+  }
+
+  // ── Post form ──────────────────────────────────────────────────────────────
+  function selectType(t){
+    formType = t;
+    document.getElementById('opt-donate').className  = 'type-opt' + (t==='donate'  ? ' sel-donate'  : '');
+    document.getElementById('opt-request').className = 'type-opt' + (t==='request' ? ' sel-request' : '');
+  }
+
+  function resetPostForm(){
+    ['f-title','f-desc','f-area','f-expiry'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-cat').selectedIndex = 0;
+    selectType('donate');
+    document.getElementById('post-error').style.display = 'none';
+  }
+
+  async function submitListing(){
+    const errEl = document.getElementById('post-error');
+    const btn   = document.getElementById('post-submit-btn');
+    errEl.style.display = 'none';
+    const body = {
+      type:        formType,
+      title:       document.getElementById('f-title').value.trim(),
+      description: document.getElementById('f-desc').value.trim(),
+      category:    document.getElementById('f-cat').value,
+      area:        document.getElementById('f-area').value.trim(),
+      expiry:      document.getElementById('f-expiry').value.trim() || 'Flexible',
+    };
+    if (!body.title || !body.area){
+      errEl.textContent = 'Please fill in title and area.';
+      errEl.style.display = ''; return;
+    }
+    btn.disabled = true; btn.textContent = 'Posting…';
+    try {
+      await api('/listings', { method: 'POST', body: JSON.stringify(body) });
+      resetPostForm();
+      showToast('Listing posted!');
+      setTimeout(() => setTab('browse'), 600);
+    } catch(err){
+      errEl.textContent = err.message; errEl.style.display = '';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Post listing';
+    }
+  }
+
+  function setFilter(f, el){
+    activeFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    loadListings();
+  }
+
+  // ── Boot — check for existing session ─────────────────────────────────────
+  (async () => {
+    try {
+      const data = await api('/auth/me');
+      currentUser = data.user;
+      showApp();
+    } catch {
+      showAuth('register');
+    }
+  })();
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('screen-auth').style.display !== 'none') submitAuth();
+  });
+</script>
+</body>
+</html>
